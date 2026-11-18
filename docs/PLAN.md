@@ -1,6 +1,6 @@
 # review-layers-lab 계획
 
-claude.dev 글 "How the Claude Code team does code review"(2026-10-15)의 리뷰 구조를 작은 샘플 저장소로 재현한다. PR과 코드 리뷰 예시를 남기는 것이 목적이다.
+claude.dev 글 [How the Claude Code team does code review](https://claude.dev/blog/solving-code-review-at-anthropic/)(2026-10-15)의 리뷰 구조를 작은 샘플 저장소로 재현한다. PR과 코드 리뷰 예시를 남기는 것이 목적이다.
 
 ## 목표와 범위
 

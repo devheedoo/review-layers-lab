@@ -6,7 +6,7 @@
 > - 지적에는 `[Important]` / `[Nit]` / `[Pre-existing]` 태그를 붙인다. 위험도 라벨(`risk:high`)이 붙으면 사람이 확인해야 병합된다.
 > - 가장 값진 지적은 리뷰 시스템 자체의 구멍이었다. 리뷰 규칙과 그 규칙이 실제로 읽히는 경로까지 검증해야 한다.
 
-원문: "How the Claude Code team does code review" (claude.dev, 2026-10-15). 계획과 상세 결과는 [docs/PLAN.md](docs/PLAN.md)에 있다.
+원문: [How the Claude Code team does code review](https://claude.dev/blog/solving-code-review-at-anthropic/) (claude.dev, 2026-10-15). 계획과 상세 결과는 [docs/PLAN.md](docs/PLAN.md)에 있다.
 
 ## 1. 재현한 리뷰 층
 
