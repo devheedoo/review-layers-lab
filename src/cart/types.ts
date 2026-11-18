@@ -12,6 +12,7 @@ export type CartItem = Product & {
 
 export type PriceBreakdown = {
   subtotal: number
+  discount: number
   shipping: number
   total: number
 }
