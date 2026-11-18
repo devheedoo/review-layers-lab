@@ -11,4 +11,12 @@ export const copy = {
   total: '결제 예정 금액',
   freeShippingRemaining: (remaining: string) => `${remaining} 더 담으면 무료배송이에요.`,
   freeShippingReached: '무료배송 조건을 채웠어요.',
+  discount: '쿠폰 할인',
+  couponLabel: '쿠폰 코드',
+  couponPlaceholder: '예: WELCOME10',
+  couponApply: '적용',
+  couponChecking: '확인 중…',
+  couponRemove: '쿠폰 빼기',
+  couponApplied: (code: string) => `${code} 쿠폰을 적용했어요.`,
+  couponRejected: '쓸 수 없는 쿠폰이에요. 3만원 이상 주문에 쓸 수 있어요.',
 } as const
