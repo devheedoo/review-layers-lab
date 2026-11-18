@@ -1,0 +1,123 @@
+# PR 위험도를 경로와 diff 크기로 분류해 risk:low|mid|high 라벨을 붙이고,
+# risk:high인데 사람이 확인하지 않은 PR은 risk-gate 체크로 막는다.
+#
+# 분류 규칙 (가장 높은 등급이 PR 등급이 된다)
+#   high: .github/ 아래, package.json, package-lock.json, vite.config.ts, tsconfig*.json, eslint.config.js
+#         또는 변경 줄 수 합계(lockfile 제외)가 400줄 초과
+#   low : *.md, src/copy.ts
+#   mid : 그 밖의 모든 파일
+#
+# 주의: pull_request 트리거는 PR 브랜치에 있는 이 파일로 돈다.
+#       이 파일을 고치는 PR은 자기 분류 규칙을 바꿀 수 있으므로, 이 파일 자체가 high 경로에 들어 있다.
+name: risk
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: risk-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  REPO: ${{ github.repository }}
+  PR: ${{ github.event.pull_request.number }}
+
+jobs:
+  risk-label:
+    runs-on: ubuntu-latest
+    outputs:
+      level: ${{ steps.classify.outputs.level }}
+    steps:
+      - name: Classify by changed paths and diff size
+        id: classify
+        run: |
+          set -euo pipefail
+          rank() { case "$1" in low) echo 0 ;; mid) echo 1 ;; high) echo 2 ;; esac; }
+
+          level=low
+          total=0
+          reasons=""
+          while IFS=$'\t' read -r path changes; do
+            [ -z "$path" ] && continue
+            if [ "$path" != "package-lock.json" ]; then
+              total=$((total + changes))
+            fi
+            case "$path" in
+              .github/*|package.json|package-lock.json|vite.config.ts|tsconfig*.json|eslint.config.js)
+                file_level=high ;;
+              *.md|src/copy.ts)
+                file_level=low ;;
+              *)
+                file_level=mid ;;
+            esac
+            reasons+="| \`${path}\` | ${changes} | ${file_level} |"$'\n'
+            if [ "$(rank "$file_level")" -gt "$(rank "$level")" ]; then
+              level=$file_level
+            fi
+          done < <(gh api "repos/$REPO/pulls/$PR/files" --paginate \
+                     --jq '.[] | [.filename, (.additions + .deletions)] | @tsv')
+
+          if [ "$total" -gt 400 ]; then
+            level=high
+          fi
+
+          echo "level=$level" >> "$GITHUB_OUTPUT"
+          {
+            echo "## risk:$level"
+            echo
+            echo "변경 줄 수 합계(lockfile 제외): $total (400 초과 시 high)"
+            echo
+            echo "| 파일 | 변경 줄 | 등급 |"
+            echo "|---|---|---|"
+            printf '%s' "$reasons"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Apply risk label
+        env:
+          LEVEL: ${{ steps.classify.outputs.level }}
+          ACTION: ${{ github.event.action }}
+        run: |
+          set -euo pipefail
+          current=$(gh api "repos/$REPO/issues/$PR/labels" --jq '.[].name')
+
+          for other in low mid high; do
+            if [ "$other" != "$LEVEL" ] && grep -qx "risk:$other" <<< "$current"; then
+              gh api -X DELETE "repos/$REPO/issues/$PR/labels/risk%3A$other" > /dev/null
+            fi
+          done
+          if ! grep -qx "risk:$LEVEL" <<< "$current"; then
+            gh api "repos/$REPO/issues/$PR/labels" -f "labels[]=risk:$LEVEL" > /dev/null
+          fi
+
+          # 새 커밋이 올라오면 사람 확인은 무효가 된다 (stale review dismissal 흉내).
+          if [ "$ACTION" = "synchronize" ] && grep -qx "reviewed-by-human" <<< "$current"; then
+            gh api -X DELETE "repos/$REPO/issues/$PR/labels/reviewed-by-human" > /dev/null
+            echo "새 커밋이 올라와 reviewed-by-human 라벨을 뗐다." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  risk-gate:
+    needs: risk-label
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require human review for risk:high
+        env:
+          LEVEL: ${{ needs.risk-label.outputs.level }}
+        run: |
+          set -euo pipefail
+          if [ "$LEVEL" != "high" ]; then
+            echo "risk:$LEVEL — 사람 확인 라벨 없이 통과한다."
+            exit 0
+          fi
+          labels=$(gh api "repos/$REPO/issues/$PR/labels" --jq '.[].name')
+          if grep -qx "reviewed-by-human" <<< "$labels"; then
+            echo "risk:high — reviewed-by-human 라벨이 있어 통과한다."
+            exit 0
+          fi
+          echo "::error::risk:high PR이다. 사람이 diff를 직접 보고 reviewed-by-human 라벨을 붙여야 병합할 수 있다."
+          exit 1
