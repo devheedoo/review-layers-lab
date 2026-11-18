@@ -10,7 +10,7 @@ permissions:
 
 # 같은 PR에 새 커밋이 올라오면 이전 실행은 취소한다. main push는 취소하지 않는다.
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
