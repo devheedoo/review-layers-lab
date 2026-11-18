@@ -26,3 +26,12 @@ npm run build
 - `src/components/` — 화면 컴포넌트
 - `src/copy.ts` — 화면 문구 모음
 - `src/flags.ts` — 기능 플래그
+
+## 기능 플래그 켜고 끄기
+
+플래그 기본값은 `src/flags.ts`에 있다. 로컬에서만 바꿔 보려면 `.env.local`에 적는다.
+
+```bash
+echo "VITE_FLAG_freeShippingBanner=false" >> .env.local
+npm run dev
+```

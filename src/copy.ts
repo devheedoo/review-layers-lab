@@ -8,7 +8,7 @@ export const copy = {
   subtotal: '상품 금액',
   shipping: '배송비',
   free: '무료',
-  total: '결재 예정 금액',
+  total: '결제 예정 금액',
   freeShippingRemaining: (remaining: string) => `${remaining} 더 담으면 무료배송이에요.`,
   freeShippingReached: '무료배송 조건을 채웠어요.',
 } as const
