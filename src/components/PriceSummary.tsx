@@ -20,6 +20,9 @@ export function PriceSummary({ breakdown }: Props) {
       )}
       <dl className="space-y-1">
         <Row label={copy.subtotal} value={formatWon(breakdown.subtotal)} />
+        {breakdown.discount > 0 && (
+          <Row label={copy.discount} value={`−${formatWon(breakdown.discount)}`} />
+        )}
         <Row
           label={copy.shipping}
           value={breakdown.shipping === 0 ? copy.free : formatWon(breakdown.shipping)}

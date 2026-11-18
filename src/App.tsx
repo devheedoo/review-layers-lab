@@ -4,12 +4,16 @@ import { calculateTotal } from './cart/pricing'
 import type { CartItem, Product } from './cart/types'
 import { CartItemRow } from './components/CartItemRow'
 import { Catalog } from './components/Catalog'
+import { CouponForm } from './components/CouponForm'
 import { PriceSummary } from './components/PriceSummary'
 import { copy } from './copy'
+import { isEnabled } from './flags'
 
 export default function App() {
   const [items, setItems] = useState<CartItem[]>(initialCart)
-  const breakdown = calculateTotal(items)
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null)
+  const couponEnabled = isEnabled('discountCoupon')
+  const breakdown = calculateTotal(items, couponEnabled ? appliedCoupon : null)
 
   const changeQuantity = (id: string, delta: number) => {
     setItems((prev) =>
@@ -53,6 +57,14 @@ export default function App() {
         </ul>
       )}
 
+      {couponEnabled && (
+        <CouponForm
+          subtotal={breakdown.subtotal}
+          appliedCoupon={appliedCoupon}
+          onApply={setAppliedCoupon}
+          onRemove={() => setAppliedCoupon(null)}
+        />
+      )}
       <PriceSummary breakdown={breakdown} />
       <Catalog onAdd={addItem} />
     </main>

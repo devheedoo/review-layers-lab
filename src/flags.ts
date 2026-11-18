@@ -7,6 +7,7 @@
  */
 const defaults = {
   freeShippingBanner: true,
+  discountCoupon: false,
 } satisfies Record<string, boolean>
 
 export type FlagName = keyof typeof defaults
