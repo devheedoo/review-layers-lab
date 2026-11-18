@@ -1,10 +1,12 @@
 # review-layers-lab
 
+[Claude Code 팀의 코드 리뷰 구조](https://claude.dev/blog/solving-code-review-at-anthropic/)를 작은 React 장바구니 앱에 직접 걸어 본 학습용 저장소다. 혼자 또는 작은 팀이 이 구조를 어디까지 들일 수 있는지 시험했다.
+
 > **TL;DR**
-> - AI가 코드 대부분을 쓰면 사람이 모든 diff를 읽을 수 없다. 그래서 **잡는 문제가 서로 다른 검사 층에 읽는 일을 나눠 맡기고, 사람은 위험한 변경만 보는** 리뷰 구조가 나왔다. 이 저장소는 그 구조를 작은 장바구니 앱으로 재현한 학습용 저장소다.
-> - 교재는 앱 코드가 아니라 **PR 기록**이다. 샘플 PR [#4](https://github.com/devheedoo/review-layers-lab/pull/4)~[#9](https://github.com/devheedoo/review-layers-lab/pull/9)와 [#12](https://github.com/devheedoo/review-layers-lab/pull/12)에 지적, 수정 커밋, 라벨, 체크 결과가 남아 있다.
-> - 지적에는 `[Important]` / `[Nit]` / `[Pre-existing]` 태그를 붙인다. 위험도 라벨(`risk:high`)이 붙으면 사람이 확인해야 병합된다.
-> - 가장 값진 지적은 리뷰 시스템 자체의 구멍이었다. 리뷰 규칙과 그 규칙이 실제로 읽히는 경로까지 검증해야 한다.
+> - AI가 코드 대부분을 쓰면 사람이 모든 diff를 읽을 수 없다. 그래서 Claude Code 팀은 읽는 일을 **잡는 문제가 서로 다른 검사 층**(자체 검증, CI, AI 리뷰, 위험도별 사람 승인, 되돌리기)에 나눠 맡긴다.
+> - AI 지적은 `[Important]` / `[Nit]` / `[Pre-existing]`으로 나눠 **꼭 고칠 것과 넘겨도 될 것을 가른다.** 이 저장소에서 사람 승인은 `risk:high` 변경에만 필요하고, **승인한 그 커밋에만** 유효하다.
+> - high PR을 사람이 볼 때는 **에이전트로 어디를 볼지 정하고, high 원인 부분은 직접 읽는다.** 요약만 보고 approve하지 않는다.
+> - 교재는 앱 코드가 아니라 **PR 기록**([#4](https://github.com/devheedoo/review-layers-lab/pull/4)~[#9](https://github.com/devheedoo/review-layers-lab/pull/9), [#12](https://github.com/devheedoo/review-layers-lab/pull/12))이다. 가장 값진 지적은 리뷰 시스템 자체의 구멍이었다.
 
 ## 1. 목표로 하는 구조
 
