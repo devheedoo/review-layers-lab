@@ -2,7 +2,7 @@ import { couponDiscount, isValidCouponCode, meetsCouponMinimum } from './coupon'
 import type { CartItem, PriceBreakdown } from './types'
 
 /** 이 금액 이상 담으면 배송비가 무료다. */
-export const FREE_SHIPPING_THRESHOLD = 50_000
+export const FREE_SHIPPING_THRESHOLD = 40_000
 export const SHIPPING_FEE = 3_000
 
 export function lineTotal(item: CartItem): number {
