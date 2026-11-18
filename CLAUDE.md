@@ -30,4 +30,7 @@ npm run build
 
 ## 코드 리뷰
 
-코드 리뷰를 할 때는 `REVIEW.md`의 규칙과 태그 형식을 따른다.
+코드 리뷰(`/code-review` 포함)를 할 때는 먼저 `REVIEW.md`를 읽고 그 규칙을 따른다.
+
+- 지적마다 요약(summary)과 PR 코멘트의 **맨 앞**에 `[Important]` / `[Nit]` / `[Pre-existing]` 중 하나를 붙인다.
+- `/code-review`는 `REVIEW.md`를 스스로 읽지 않는다 (2.5단계에서 확인). 이 절이 그 연결 고리다.

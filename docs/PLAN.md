@@ -30,7 +30,10 @@ claude.dev 글 "How the Claude Code team does code review"(2026-10-15)의 리뷰
   - 계정은 GitHub Free다. private일 때는 ruleset·branch protection API가 403을 돌려줬다.
 - [x] 위험도 분류 방식: 규칙 기반(경로 + diff 크기)
   - API key 없이 Actions에서 돌릴 수 있다. LLM 기반은 로컬 리뷰로 판정하는 방식만 가능하다.
-- [ ] `/code-review`가 Important / Nit / Pre-existing 태그를 지시대로 붙이는지는 아직 확인하지 않았다. 2.5단계에서 확인한다.
+- [x] `/code-review`가 Important / Nit / Pre-existing 태그를 지시대로 붙이는가 → **CLAUDE.md를 거치면 붙는다** (2.5단계, 2026-11-19)
+  - `/code-review`의 지시문은 CLAUDE.md만 읽고 REVIEW.md는 읽지 않는다. 그래서 CLAUDE.md에 "리뷰할 때 REVIEW.md를 따른다"는 절을 두었다.
+  - 시험 diff(경계값 `>=`→`>` + `== true` + 근처의 기존 버그)에서 Important 1 · Pre-existing 1 · Nit 3이 나왔고, 심은 세 가지가 모두 의도한 태그로 분류됐다.
+  - 한계: 시험한 리뷰어가 REVIEW.md를 쓴 세션 자신이라 결과가 유리하게 나왔을 수 있다. 5단계에서 새 세션으로 다시 확인한다.
 
 ## 알려진 제약
 
