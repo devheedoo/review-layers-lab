@@ -1,4 +1,4 @@
-# review-layers-lab 계획
+# who-reviews-what 계획
 
 claude.dev 글 [How the Claude Code team does code review](https://claude.dev/blog/solving-code-review-at-anthropic/)(2026-10-15)의 리뷰 구조를 작은 샘플 저장소로 재현한다. PR과 코드 리뷰 예시를 남기는 것이 목적이다.
 
@@ -8,7 +8,7 @@ claude.dev 글 [How the Claude Code team does code review](https://claude.dev/bl
   - 재현: PR 전 자체 검증(CLAUDE.md), 필수 CI, AI 리뷰(REVIEW.md + 태그), 위험도 분류, 되돌리기 칸이 있는 PR 템플릿, feature flag
   - 흉내만: 위험도별 사람 승인 수(라벨과 상태 체크로 표시)
   - 제외: 보안 리뷰 Action, merge queue, 단계 배포 채널, eval set
-- 영향 범위: 새 저장소 `review-layers-lab` 1개. 다른 저장소는 건드리지 않는다.
+- 영향 범위: 새 저장소 `who-reviews-what`(처음 이름 `review-layers-lab`) 1개. 다른 저장소는 건드리지 않는다.
 - 위험: 샘플 PR에 일부러 넣은 버그가 main에 병합되지 않게 한다. 병합 전에 모두 수정하거나 PR을 닫는다. 단, S3용 기존 버그는 일부러 main에 둔다.
 
 ## 결정 사항

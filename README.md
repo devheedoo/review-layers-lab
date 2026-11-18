@@ -1,4 +1,4 @@
-# review-layers-lab
+# who-reviews-what
 
 [Claude Code 팀의 코드 리뷰 구조](https://claude.dev/blog/solving-code-review-at-anthropic/)를 작은 React 장바구니 앱에 직접 걸어 본 학습용 저장소다. 혼자 또는 작은 팀이 이 구조를 어디까지 들일 수 있는지 시험했다.
 
@@ -6,7 +6,7 @@
 > - AI가 코드 대부분을 쓰면 사람이 모든 diff를 읽을 수 없다. 그래서 Claude Code 팀은 읽는 일을 **잡는 문제가 서로 다른 검사 층**(자체 검증, CI, AI 리뷰, 위험도별 사람 승인, 되돌리기)에 나눠 맡긴다.
 > - AI 지적은 `[Important]` / `[Nit]` / `[Pre-existing]`으로 나눠 **꼭 고칠 것과 넘겨도 될 것을 가른다.** 이 저장소에서 사람 승인은 `risk:high` 변경에만 필요하고, **승인한 그 커밋에만** 유효하다.
 > - high PR을 사람이 볼 때는 **에이전트로 어디를 볼지 정하고, high 원인 부분은 직접 읽는다.** 요약만 보고 approve하지 않는다.
-> - 교재는 앱 코드가 아니라 **PR 기록**([#4](https://github.com/devheedoo/review-layers-lab/pull/4)~[#9](https://github.com/devheedoo/review-layers-lab/pull/9), [#12](https://github.com/devheedoo/review-layers-lab/pull/12))이다. 가장 값진 지적은 리뷰 시스템 자체의 구멍이었다.
+> - 교재는 앱 코드가 아니라 **PR 기록**([#4](https://github.com/devheedoo/who-reviews-what/pull/4)~[#9](https://github.com/devheedoo/who-reviews-what/pull/9), [#12](https://github.com/devheedoo/who-reviews-what/pull/12))이다. 가장 값진 지적은 리뷰 시스템 자체의 구멍이었다.
 
 ## 1. 목표로 하는 구조
 
@@ -81,17 +81,17 @@ PR마다 **Files changed 탭의 인라인 코멘트**와 **Conversation 탭의 r
 
 | PR | 내용 | 볼 점 |
 |---|---|---|
-| [S1 #4](https://github.com/devheedoo/review-layers-lab/pull/4) | 문구만 수정 | "지적 없음"을 기대했지만 6개가 나왔다. AI 리뷰어는 할 말이 없어도 뭔가 찾아낸다. 그래서 Nit을 "고치지 않아도 된다"고 정해둔 게 중요하다 |
-| [S2 #5](https://github.com/devheedoo/review-layers-lab/pull/5) | 할인 기능 + 일부러 심은 버그 (경계값 `>=`→`>`, stale closure) | 심은 버그 두 개가 1라운드에서 모두 `[Important]`로 잡혔다. 2라운드에서는 1라운드 수정 커밋이 만든 새 Nit이 나왔다. 리뷰 라운드에 상한이 필요한 이유다 |
-| [S3 #6](https://github.com/devheedoo/review-layers-lab/pull/6) | 미리 심어둔 기존 버그 근처 수정 | "이 PR이 만든 문제"와 "원래 있던 문제"를 태그로 나눴다. `[Pre-existing]`은 PR을 막지 않고 이슈로 넘어간다. 리뷰 범위가 끝없이 커지지 않게 하는 장치다 |
-| [S4 #9](https://github.com/devheedoo/review-layers-lab/pull/9) | `.github/workflows/` 수정 | `risk:high`가 붙고 `risk-gate`가 병합을 막았다. 사람이 라벨을 붙인 뒤에야 병합됐다 |
+| [S1 #4](https://github.com/devheedoo/who-reviews-what/pull/4) | 문구만 수정 | "지적 없음"을 기대했지만 6개가 나왔다. AI 리뷰어는 할 말이 없어도 뭔가 찾아낸다. 그래서 Nit을 "고치지 않아도 된다"고 정해둔 게 중요하다 |
+| [S2 #5](https://github.com/devheedoo/who-reviews-what/pull/5) | 할인 기능 + 일부러 심은 버그 (경계값 `>=`→`>`, stale closure) | 심은 버그 두 개가 1라운드에서 모두 `[Important]`로 잡혔다. 2라운드에서는 1라운드 수정 커밋이 만든 새 Nit이 나왔다. 리뷰 라운드에 상한이 필요한 이유다 |
+| [S3 #6](https://github.com/devheedoo/who-reviews-what/pull/6) | 미리 심어둔 기존 버그 근처 수정 | "이 PR이 만든 문제"와 "원래 있던 문제"를 태그로 나눴다. `[Pre-existing]`은 PR을 막지 않고 이슈로 넘어간다. 리뷰 범위가 끝없이 커지지 않게 하는 장치다 |
+| [S4 #9](https://github.com/devheedoo/who-reviews-what/pull/9) | `.github/workflows/` 수정 | `risk:high`가 붙고 `risk-gate`가 병합을 막았다. 사람이 라벨을 붙인 뒤에야 병합됐다 |
 
 ### ③ 리뷰가 리뷰 인프라를 고친 PR
 
-[#12](https://github.com/devheedoo/review-layers-lab/pull/12)는 샘플 리뷰에서 `[Pre-existing]`으로 나온 지적 두 개를 고쳤다. 둘 다 앱 버그가 아니라 리뷰 시스템 자체의 구멍이었다.
+[#12](https://github.com/devheedoo/who-reviews-what/pull/12)는 샘플 리뷰에서 `[Pre-existing]`으로 나온 지적 두 개를 고쳤다. 둘 다 앱 버그가 아니라 리뷰 시스템 자체의 구멍이었다.
 
-- [#8](https://github.com/devheedoo/review-layers-lab/issues/8): 금액 계산 파일 변경이 `mid`로 분류돼 사람 확인 없이 통과됐다.
-- [#10](https://github.com/devheedoo/review-layers-lab/issues/10): 라벨 이벤트로 `synchronize` 실행을 취소하면 사람 확인을 우회할 수 있었다.
+- [#8](https://github.com/devheedoo/who-reviews-what/issues/8): 금액 계산 파일 변경이 `mid`로 분류돼 사람 확인 없이 통과됐다.
+- [#10](https://github.com/devheedoo/who-reviews-what/issues/10): 라벨 이벤트로 `synchronize` 실행을 취소하면 사람 확인을 우회할 수 있었다.
 
 PR 본문에서 해결 방식 세 가지(취소 끄기 / 그룹 분리 / head SHA 비교)를 비교한 부분을 본다.
 
