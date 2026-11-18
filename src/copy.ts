@@ -13,11 +13,12 @@ export const copy = {
   freeShippingReached: '무료배송 조건을 채웠어요.',
   discount: '쿠폰 할인',
   couponLabel: '쿠폰 코드',
-  couponPlaceholder: '예: WELCOME10',
+  couponPlaceholder: '받은 쿠폰 코드를 입력하세요',
   couponApply: '적용',
   couponChecking: '확인 중…',
   couponRemove: '쿠폰 빼기',
   couponApplied: (code: string) => `${code} 쿠폰을 적용했어요.`,
+  couponPending: (code: string) => `${code} 쿠폰을 등록했어요. 아직 할인 조건을 채우지 못했어요.`,
   couponRejected: '없는 쿠폰 코드예요.',
   couponBelowMinimum: (minimum: string, remaining: string) =>
     `${minimum} 이상 담아야 할인돼요. ${remaining} 더 담아 주세요.`,

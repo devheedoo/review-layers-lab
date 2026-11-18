@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   COUPON_MIN_SUBTOTAL,
   isValidCouponCode,
@@ -29,13 +29,22 @@ const VERIFY_DELAY_MS = 600
 export function CouponForm({ subtotal, appliedCoupon, onApply, onRemove }: Props) {
   const [code, setCode] = useState('')
   const [status, setStatus] = useState<Status>('idle')
+  const timerRef = useRef<number | null>(null)
+
+  // 검증 중에 폼이 사라지면(플래그 끔 등) 대기 중인 콜백을 취소한다.
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current)
+    }
+  }, [])
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     // 확인 중에는 입력칸이 잠겨 있어 code가 바뀌지 않는다.
     const submitted = code
     setStatus('checking')
-    setTimeout(() => {
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null
       if (isValidCouponCode(submitted)) {
         onApply(normalizeCouponCode(submitted))
         setStatus('idle')
@@ -47,15 +56,18 @@ export function CouponForm({ subtotal, appliedCoupon, onApply, onRemove }: Props
   }
 
   if (appliedCoupon) {
+    const discounted = meetsCouponMinimum(subtotal)
     return (
       <div className="space-y-1 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm">
         <div className="flex items-center justify-between">
-          <span className="text-emerald-800">{copy.couponApplied(appliedCoupon)}</span>
+          <span className="text-emerald-800">
+            {discounted ? copy.couponApplied(appliedCoupon) : copy.couponPending(appliedCoupon)}
+          </span>
           <button type="button" className="text-slate-500 hover:text-red-600" onClick={onRemove}>
             {copy.couponRemove}
           </button>
         </div>
-        {!meetsCouponMinimum(subtotal) && (
+        {!discounted && (
           <p className="text-amber-700">
             {copy.couponBelowMinimum(
               formatWon(COUPON_MIN_SUBTOTAL),
