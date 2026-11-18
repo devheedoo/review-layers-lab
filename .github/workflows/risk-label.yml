@@ -2,13 +2,20 @@
 # risk:high인데 사람이 확인하지 않은 PR은 risk-gate 체크로 막는다.
 #
 # 분류 규칙 (가장 높은 등급이 PR 등급이 된다)
-#   high: .github/ 아래, package.json, package-lock.json, vite.config.ts, tsconfig*.json, eslint.config.js
+#   high: .github/ 아래, package.json, package-lock.json, vite.config.ts, tsconfig*.json, eslint.config.js,
+#         금액 계산 파일(src/cart/pricing.ts, src/cart/coupon.ts)
 #         또는 변경 줄 수 합계(lockfile 제외)가 400줄 초과
 #   low : *.md, src/copy.ts
 #   mid : 그 밖의 모든 파일
 #
 # 주의: pull_request 트리거는 PR 브랜치에 있는 이 파일로 돈다.
 #       이 파일을 고치는 PR은 자기 분류 규칙을 바꿀 수 있으므로, 이 파일 자체가 high 경로에 들어 있다.
+#
+# 사람 확인은 커밋 단위다 (stale review dismissal 흉내).
+#   reviewed-by-human 라벨이 붙으면 그 시점의 head 커밋에 human-review 커밋 상태(success)를 남긴다.
+#   risk-gate는 라벨과 "현재 head 커밋의 human-review 상태"를 둘 다 요구한다.
+#   새 커밋이 올라오면 새 head에는 그 상태가 없으므로, 어떤 이벤트로 시작한 실행이든 stale 라벨을 뗀다.
+#   (이벤트 종류로 판단하지 않으므로, 라벨 이벤트 실행이 synchronize 실행을 취소해도 확인이 우회되지 않는다.)
 name: risk
 
 on:
@@ -18,7 +25,10 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  statuses: write  # human-review 커밋 상태를 남긴다
 
+# 취소돼도 안전하다: 판단은 이벤트 종류가 아니라 현재 라벨·head 커밋 상태로 하고, 마지막 실행이 다시 판단한다.
+# reviewed-by-human 기록 실행이 기록 전에 취소되면 다음 실행이 라벨을 뗀다 (막는 쪽으로 실패한다).
 concurrency:
   group: risk-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -27,6 +37,8 @@ env:
   GH_TOKEN: ${{ github.token }}
   REPO: ${{ github.repository }}
   PR: ${{ github.event.pull_request.number }}
+  # 이 실행의 체크 결과가 붙는 커밋. 라벨을 붙인 이벤트라면 라벨을 붙인 시점의 head다.
+  HEAD_SHA: ${{ github.event.pull_request.head.sha }}
 
 jobs:
   risk-label:
@@ -34,6 +46,17 @@ jobs:
     outputs:
       level: ${{ steps.classify.outputs.level }}
     steps:
+      # 취소될 틈을 줄이려고 맨 앞에 둔다.
+      - name: Record human review on the labeled head commit
+        if: github.event.action == 'labeled' && github.event.label.name == 'reviewed-by-human'
+        run: |
+          set -euo pipefail
+          gh api "repos/$REPO/statuses/$HEAD_SHA" \
+            -f state=success \
+            -f context=human-review \
+            -f description="reviewed-by-human 라벨이 이 커밋에서 붙었다" > /dev/null
+          echo "reviewed-by-human: ${HEAD_SHA} 커밋에 human-review 상태를 남겼다." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Classify by changed paths and diff size
         id: classify
         run: |
@@ -49,7 +72,7 @@ jobs:
               total=$((total + changes))
             fi
             case "$path" in
-              .github/*|package.json|package-lock.json|vite.config.ts|tsconfig*.json|eslint.config.js)
+              .github/*|package.json|package-lock.json|vite.config.ts|tsconfig*.json|eslint.config.js|src/cart/pricing.ts|src/cart/coupon.ts)
                 file_level=high ;;
               *.md|src/copy.ts)
                 file_level=low ;;
@@ -81,7 +104,6 @@ jobs:
       - name: Apply risk label
         env:
           LEVEL: ${{ steps.classify.outputs.level }}
-          ACTION: ${{ github.event.action }}
         run: |
           set -euo pipefail
           current=$(gh api "repos/$REPO/issues/$PR/labels" --jq '.[].name')
@@ -95,10 +117,18 @@ jobs:
             gh api "repos/$REPO/issues/$PR/labels" -f "labels[]=risk:$LEVEL" > /dev/null
           fi
 
-          # 새 커밋이 올라오면 사람 확인은 무효가 된다 (stale review dismissal 흉내).
-          if [ "$ACTION" = "synchronize" ] && grep -qx "reviewed-by-human" <<< "$current"; then
-            gh api -X DELETE "repos/$REPO/issues/$PR/labels/reviewed-by-human" > /dev/null
-            echo "새 커밋이 올라와 reviewed-by-human 라벨을 뗐다." >> "$GITHUB_STEP_SUMMARY"
+          # 사람 확인이 현재 head 커밋에서 이뤄지지 않았으면 라벨을 뗀다 (stale review dismissal 흉내).
+          # 이벤트 종류(synchronize 등)로 판단하지 않는다. 그래야 라벨 이벤트 실행이 synchronize 실행을
+          # 취소해도 stale 라벨이 남지 않는다.
+          # 이 실행의 head가 이미 지난 커밋이면 건드리지 않는다. 새 head의 실행이 판단한다.
+          live_head=$(gh api "repos/$REPO/pulls/$PR" --jq '.head.sha')
+          if [ "$live_head" = "$HEAD_SHA" ] && grep -qx "reviewed-by-human" <<< "$current"; then
+            reviewed=$(gh api "repos/$REPO/commits/$HEAD_SHA/status" \
+                         --jq '.statuses[] | select(.context == "human-review") | .state')
+            if [ "$reviewed" != "success" ]; then
+              gh api -X DELETE "repos/$REPO/issues/$PR/labels/reviewed-by-human" > /dev/null
+              echo "reviewed-by-human 라벨이 현재 head(${HEAD_SHA})에서 붙은 것이 아니라 뗐다." >> "$GITHUB_STEP_SUMMARY"
+            fi
           fi
 
   risk-gate:
@@ -115,9 +145,15 @@ jobs:
             exit 0
           fi
           labels=$(gh api "repos/$REPO/issues/$PR/labels" --jq '.[].name')
-          if grep -qx "reviewed-by-human" <<< "$labels"; then
-            echo "risk:high — reviewed-by-human 라벨이 있어 통과한다."
+          reviewed=$(gh api "repos/$REPO/commits/$HEAD_SHA/status" \
+                       --jq '.statuses[] | select(.context == "human-review") | .state')
+          if grep -qx "reviewed-by-human" <<< "$labels" && [ "$reviewed" = "success" ]; then
+            echo "risk:high — reviewed-by-human 라벨이 head(${HEAD_SHA})에서 붙어 있어 통과한다."
             exit 0
+          fi
+          if grep -qx "reviewed-by-human" <<< "$labels"; then
+            echo "::error::reviewed-by-human 라벨은 있지만 head(${HEAD_SHA})에서 붙은 기록(human-review 상태)이 없다. 이 커밋까지 보고 라벨을 다시 붙여야 한다."
+            exit 1
           fi
           echo "::error::risk:high PR이다. 사람이 diff를 직접 보고 reviewed-by-human 라벨을 붙여야 병합할 수 있다."
           exit 1
