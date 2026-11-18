@@ -1,4 +1,4 @@
-import { couponDiscount } from './coupon'
+import { couponDiscount, isValidCouponCode, meetsCouponMinimum } from './coupon'
 import type { CartItem, PriceBreakdown } from './types'
 
 /** 이 금액 이상 담으면 배송비가 무료다. */
@@ -27,14 +27,19 @@ export function remainingForFreeShipping(subtotal: number): number {
 
 /**
  * 결제 예정 금액.
- * 배송비는 할인 전 상품 금액으로 정한다. appliedCoupon은 쿠폰 검증을 통과한 코드다.
+ * 배송비는 할인 전 상품 금액으로 정한다.
+ * 쿠폰 조건(코드·최소 금액)은 여기서 현재 상품 금액으로 매번 다시 판정한다.
+ * 그래서 쿠폰을 적용한 뒤 상품을 빼 최소 금액 아래로 내려가면 할인이 사라진다.
  */
 export function calculateTotal(
   items: readonly CartItem[],
   appliedCoupon: string | null = null,
 ): PriceBreakdown {
   const subtotal = subtotalOf(items)
-  const discount = appliedCoupon ? couponDiscount(subtotal) : 0
+  const discount =
+    appliedCoupon !== null && isValidCouponCode(appliedCoupon) && meetsCouponMinimum(subtotal)
+      ? couponDiscount(subtotal)
+      : 0
   const shipping = shippingFee(subtotal)
   return { subtotal, discount, shipping, total: subtotal - discount + shipping }
 }

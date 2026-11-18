@@ -18,5 +18,7 @@ export const copy = {
   couponChecking: '확인 중…',
   couponRemove: '쿠폰 빼기',
   couponApplied: (code: string) => `${code} 쿠폰을 적용했어요.`,
-  couponRejected: '쓸 수 없는 쿠폰이에요. 3만원 이상 주문에 쓸 수 있어요.',
+  couponRejected: '없는 쿠폰 코드예요.',
+  couponBelowMinimum: (minimum: string, remaining: string) =>
+    `${minimum} 이상 담아야 할인돼요. ${remaining} 더 담아 주세요.`,
 } as const

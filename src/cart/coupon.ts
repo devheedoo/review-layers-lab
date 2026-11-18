@@ -8,8 +8,18 @@ export function normalizeCouponCode(code: string): string {
   return code.trim().toUpperCase()
 }
 
-export function isCouponEligible(subtotal: number, code: string): boolean {
-  return normalizeCouponCode(code) === COUPON_CODE && subtotal > COUPON_MIN_SUBTOTAL
+/** 코드 자체가 맞는지만 본다. 금액 조건은 보지 않는다. */
+export function isValidCouponCode(code: string): boolean {
+  return normalizeCouponCode(code) === COUPON_CODE
+}
+
+export function meetsCouponMinimum(subtotal: number): boolean {
+  return subtotal >= COUPON_MIN_SUBTOTAL
+}
+
+/** 쿠폰 최소 금액까지 남은 금액. 이미 채웠으면 0이다. */
+export function remainingForCoupon(subtotal: number): number {
+  return Math.max(0, COUPON_MIN_SUBTOTAL - subtotal)
 }
 
 /** 할인액. 원 단위 미만은 여기서 버린다. */
